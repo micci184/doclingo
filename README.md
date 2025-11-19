@@ -53,7 +53,7 @@ doclingo en api-doc-ja.md > api-doc-en.md
 After running `npm run build` and `npm link`, verify the following commands with `GEMINI_API_KEY` set:
 
 - `doclingo ja api-doc-en.md > api-doc-ja.md`
-- ``cat api-doc-en.md | doclingo ja > api-doc-ja.md``
+- `cat api-doc-en.md | doclingo ja > api-doc-ja.md`
 - `doclingo es api-doc-en.md > api-doc-es.md`
 - `doclingo zh-CN api-doc-en.md > api-doc-zh-cn.md`
 - `doclingo zh-TW api-doc-en.md > api-doc-zh-tw.md`
