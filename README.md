@@ -17,7 +17,7 @@ It’s designed for engineers who prefer command-line workflows or can’t rely 
 ## Requirements
 
 - Node.js 24 LTS (Krypton) or newer
-- `GEMINI_API_KEY` environment variable (Gemini API key with access to Gemini 2.5 Flash Lite)
+- `GEMINI_API_KEY` environment variable (Gemini API key with access to Gemini 2.5 Flash Lite model)
 
 ## Setup
 
