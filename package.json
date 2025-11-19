@@ -1,6 +1,6 @@
 {
   "name": "doclingo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Gemini-powered CLI translator for technical docs",
   "main": "dist/cli.js",
   "scripts": {
