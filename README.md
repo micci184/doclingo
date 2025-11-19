@@ -2,8 +2,6 @@
 
 `doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It reads Markdown from a file path or stdin and writes the translated Markdown directly to stdout so it can be piped into other tools without extra logs.
 
-> ⚠️ The Gemini API integration is coming next. For now the CLI validates inputs, language metadata, and prompt construction, so validation commands will echo the original Markdown.
-
 ## Requirements
 
 - Node.js 24 LTS (Krypton) or newer
@@ -59,4 +57,4 @@ After running `npm run build` and `npm link`, verify the following commands with
 - `doclingo zh-TW api-doc-en.md > api-doc-zh-tw.md`
 - `doclingo en api-doc-ja.md > api-doc-en.md`
 
-Each command should exit successfully without emitting extra stdout noise beyond the translated Markdown (currently the original Markdown until the Gemini call is added).
+Each command should exit successfully without emitting extra stdout noise beyond the translated Markdown returned by Gemini.
