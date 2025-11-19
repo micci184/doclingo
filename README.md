@@ -1,6 +1,8 @@
 # doclingo
 
-`doclingo` is a TypeScript CLI that translates technical documents through Gemini. It reads Markdown from a file or stdin and is designed to write the translated Markdown directly to stdout with no extra logs.
+`doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It reads Markdown from a file path or stdin and writes the translated Markdown directly to stdout so it can be piped into other tools without extra logs.
+
+> ⚠️ The Gemini API integration is coming next. For now the CLI validates inputs, language metadata, and prompt construction, so validation commands will echo the original Markdown.
 
 ## Requirements
 
@@ -23,7 +25,7 @@ cat file.md | doclingo <lang>
 ```
 
 - `<lang>`: target language code (e.g., `ja`, `en`, `es`, `zh-CN`, `zh-TW`)
-- `[file]`: optional source file; when omitted, stdin is used
+- `[file]`: optional source Markdown; when omitted, stdin is used
 - On success the CLI prints only the translated Markdown to stdout. Errors go to stderr with a non-zero exit code.
 
 ## Examples
@@ -46,4 +48,15 @@ doclingo zh-TW api-doc-en.md > api-doc-zh-tw.md
 doclingo en api-doc-ja.md > api-doc-en.md
 ```
 
-> Note: The CLI currently wires inputs, language metadata, and prompt generation. The actual Gemini API call will be added next.
+## Validation checklist
+
+After running `npm run build` and `npm link`, verify the following commands with `GEMINI_API_KEY` set:
+
+- `doclingo ja api-doc-en.md > api-doc-ja.md`
+- `cat api-doc-en.md | doclingo ja > api-doc-ja.md`
+- `doclingo es api-doc-en.md > api-doc-es.md`
+- `doclingo zh-CN api-doc-en.md > api-doc-zh-cn.md`
+- `doclingo zh-TW api-doc-en.md > api-doc-zh-tw.md`
+- `doclingo en api-doc-ja.md > api-doc-en.md`
+
+Each command should exit successfully without emitting extra stdout noise beyond the translated Markdown (currently the original Markdown until the Gemini call is added).
