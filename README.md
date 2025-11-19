@@ -26,6 +26,8 @@ It’s designed for engineers who prefer command-line workflows or can’t rely 
 ```bash
 npm install -g doclingo
 doclingo ja api-doc-en.md > api-doc-ja.md
+# print to terminal instead of writing to a file
+doclingo ja api-doc-en.md
 ```
 
 ### Run once with npx
@@ -60,6 +62,8 @@ cat file.md | doclingo <lang>
 ```bash
 # Japanese
 doclingo ja api-doc-en.md > api-doc-ja.md
+# or simply show the translation on stdout
+doclingo ja api-doc-en.md
 cat api-doc-en.md | doclingo ja > api-doc-ja.md
 
 # Spanish
