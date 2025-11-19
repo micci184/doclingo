@@ -191,6 +191,55 @@ const handleError = (error: unknown): never => {
  * CLI entry point. Validates configuration, gathers input, and (temporarily)
  * echoes it until the Gemini integration is added.
  */
+const callGemini = async (prompt: string): Promise<string> => {
+  const apiKey = ensureApiKey();
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorPayload = await response.text();
+    throw new CliError(
+      `Gemini API request failed with status ${response.status}: ${errorPayload}`
+    );
+  }
+
+  const json = (await response.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+    }>;
+  };
+
+  const translatedText = json.candidates
+    ?.flatMap((candidate) => candidate.content?.parts ?? [])
+    .map((part) => part?.text ?? "")
+    .join("")
+    .trim();
+
+  if (!translatedText) {
+    throw new CliError(
+      "Gemini API returned an empty response. Please try again later."
+    );
+  }
+
+  return translatedText;
+};
+
 const main = async (): Promise<void> => {
   ensureApiKey();
 
@@ -201,10 +250,8 @@ const main = async (): Promise<void> => {
   const input = ensureInputContent(rawInput);
 
   const prompt = buildTranslationPrompt(languageMetadata, input);
-  void prompt;
-
-  // Phase 1 step 3 will replace this echo with the Gemini translation result.
-  process.stdout.write(input);
+  const translation = await callGemini(prompt);
+  process.stdout.write(translation);
 };
 
 void main().catch(handleError);
