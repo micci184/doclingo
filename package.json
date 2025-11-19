@@ -1,19 +1,26 @@
 {
   "name": "doclingo",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.2",
+  "description": "Gemini-powered CLI translator for technical docs",
   "main": "dist/cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "dev": "ts-node src/cli.ts"
+    "dev": "ts-node src/cli.ts",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/micci184/doclingo.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "cli",
+    "translation",
+    "gemini",
+    "markdown",
+    "docs"
+  ],
+  "author": "micci184",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/micci184/doclingo/issues"
@@ -27,5 +34,13 @@
     "@types/node": "^24.10.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
   }
 }
