@@ -28,6 +28,12 @@ npm install -g doclingo
 doclingo ja api-doc-en.md > api-doc-ja.md
 ```
 
+### Run once with npx
+
+```bash
+npx doclingo ja api-doc-en.md > api-doc-ja.md
+```
+
 ### Install from GitHub
 
 ```bash
