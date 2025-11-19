@@ -1,11 +1,11 @@
 # doclingo
 
-`doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It reads Markdown from a file path or stdin and writes the translated Markdown directly to stdout so it can be piped into other tools without extra logs. The CLI targets the cost-effective **gemini-1.5-flash-8b-latest** model by default.
+`doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It reads Markdown from a file path or stdin and writes the translated Markdown directly to stdout so it can be piped into other tools without extra logs. The CLI targets the cost-effective **gemini-2.5-flash-lite** model by default.
 
 ## Requirements
 
 - Node.js 24 LTS (Krypton) or newer
-- `GEMINI_API_KEY` environment variable (Gemini API key with access to Gemini 1.5 Flash 8B)
+- `GEMINI_API_KEY` environment variable (Gemini API key with access to Gemini 2.5 Flash Lite)
 
 ## Setup
 

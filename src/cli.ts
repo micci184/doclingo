@@ -192,7 +192,7 @@ const handleError = (error: unknown): never => {
  * echoes it until the Gemini integration is added.
  */
 const GEMINI_MODEL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b-latest:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
 const callGemini = async (prompt: string): Promise<string> => {
   const apiKey = ensureApiKey();
