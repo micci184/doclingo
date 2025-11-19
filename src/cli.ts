@@ -2,6 +2,13 @@
 
 import { readFile } from "node:fs/promises";
 
+const usageMessage = [
+  "Usage: doclingo <lang> [file]",
+  "Examples:",
+  "  doclingo ja api-doc-en.md",
+  "  cat api-doc-en.md | doclingo ja",
+].join("\n");
+
 /**
  * Custom error type so we can attach friendly CLI messages with dedicated exit codes.
  */
@@ -25,15 +32,9 @@ const readFromFile = async (filePath: string): Promise<string> => {
 };
 
 /**
- * Collects UTF-8 text from stdin, failing if the user is interacting via a TTY.
+ * Collects UTF-8 text from stdin.
  */
 const readFromStdin = async (): Promise<string> => {
-  if (process.stdin.isTTY) {
-    throw new CliError(
-      "Usage: doclingo <filePath> or pipe Markdown via `cat file.md | doclingo`."
-    );
-  }
-
   return new Promise<string>((resolve, reject) => {
     let data = "";
     process.stdin.setEncoding("utf8");
@@ -70,6 +71,31 @@ const ensureInputContent = (content: string): string => {
 };
 
 /**
+ * Ensures a target language was provided.
+ */
+const ensureTargetLanguage = (lang?: string): string => {
+  if (!lang?.trim()) {
+    throw new CliError(`Missing <lang> argument.\n${usageMessage}`);
+  }
+  return lang;
+};
+
+/**
+ * Determines whether to read from a file path or stdin, enforcing usage rules.
+ */
+const resolveInputSource = async (filePath?: string): Promise<string> => {
+  if (filePath) {
+    return await readFromFile(filePath);
+  }
+
+  if (process.stdin.isTTY) {
+    throw new CliError(`No file provided and stdin is empty.\n${usageMessage}`);
+  }
+
+  return await readFromStdin();
+};
+
+/**
  * Emits user-friendly errors while preserving non-zero exit codes.
  */
 const handleError = (error: unknown): never => {
@@ -93,11 +119,13 @@ const handleError = (error: unknown): never => {
 const main = async (): Promise<void> => {
   ensureApiKey();
 
-  const [filePath] = process.argv.slice(2);
-  const rawInput = filePath
-    ? await readFromFile(filePath)
-    : await readFromStdin();
+  const [langArg, filePath] = process.argv.slice(2);
+  const targetLanguage = ensureTargetLanguage(langArg);
+  const rawInput = await resolveInputSource(filePath);
   const input = ensureInputContent(rawInput);
+
+  // TODO: use targetLanguage when constructing prompts for Gemini.
+  void targetLanguage;
 
   // Phase 1 step 3 will replace this echo with the Gemini translation result.
   process.stdout.write(input);
