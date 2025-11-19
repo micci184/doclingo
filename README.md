@@ -21,6 +21,13 @@ It’s designed for engineers who prefer command-line workflows or can’t rely 
 
 ## Setup
 
+### Install from npm
+
+```bash
+npm install -g doclingo
+doclingo ja api-doc-en.md > api-doc-ja.md
+```
+
 ### Install from GitHub
 
 ```bash
