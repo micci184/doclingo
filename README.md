@@ -1,8 +1,8 @@
 # doclingo
 
-`doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It accepts Markdown from a file path or stdin and prints the translated Markdown directly to stdout so it can be piped into other tools.
+`doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It reads Markdown from a file path or stdin and writes the translated Markdown directly to stdout so it can be piped into other tools without extra logs.
 
-> ⚠️ The Gemini API integration is coming next. For now the CLI validates inputs, language metadata, and prompt construction.
+> ⚠️ The Gemini API integration is coming next. For now the CLI validates inputs, language metadata, and prompt construction, so validation commands will echo the original Markdown.
 
 ## Requirements
 
@@ -24,8 +24,8 @@ doclingo <lang> [file]
 cat file.md | doclingo <lang>
 ```
 
-- `<lang>` — target language code (e.g. `ja`, `en`, `es`, `zh-CN`, `zh-TW`)
-- `[file]` — optional source Markdown. When omitted, stdin is used.
+- `<lang>`: target language code (e.g., `ja`, `en`, `es`, `zh-CN`, `zh-TW`)
+- `[file]`: optional source Markdown; when omitted, stdin is used
 - On success the CLI prints only the translated Markdown to stdout. Errors go to stderr with a non-zero exit code.
 
 ## Examples
