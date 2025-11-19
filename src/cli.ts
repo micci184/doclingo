@@ -8,7 +8,7 @@ class CliError extends Error {
   }
 }
 
-async function readFromFile(filePath: string): Promise<string> {
+const readFromFile = async (filePath: string): Promise<string> => {
   try {
     return await readFile(filePath, "utf8");
   } catch (error) {
@@ -16,16 +16,16 @@ async function readFromFile(filePath: string): Promise<string> {
       error instanceof Error && error.message ? ` (${error.message})` : "";
     throw new CliError(`ファイルを読み込めませんでした: ${filePath}${reason}`);
   }
-}
+};
 
-async function readFromStdin(): Promise<string> {
+const readFromStdin = async (): Promise<string> => {
   if (process.stdin.isTTY) {
     throw new CliError(
       "使い方: doclingo <filePath> または `cat file.md | doclingo` を実行してください。"
     );
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     let data = "";
     process.stdin.setEncoding("utf8");
     process.stdin.on("data", (chunk) => {
@@ -35,9 +35,9 @@ async function readFromStdin(): Promise<string> {
     process.stdin.once("end", () => resolve(data));
     process.stdin.resume();
   });
-}
+};
 
-function ensureApiKey(): string {
+const ensureApiKey = (): string => {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
     throw new CliError(
@@ -45,16 +45,18 @@ function ensureApiKey(): string {
     );
   }
   return apiKey;
-}
+};
 
-function ensureInputContent(content: string): string {
+const ensureInputContent = (content: string): string => {
   if (!content.trim()) {
-    throw new CliError("入力内容が空です。翻訳対象の Markdown を指定してください。");
+    throw new CliError(
+      "入力内容が空です。翻訳対象の Markdown を指定してください。"
+    );
   }
   return content;
-}
+};
 
-function handleError(error: unknown): never {
+const handleError = (error: unknown): never => {
   if (error instanceof CliError) {
     process.stderr.write(`${error.message}\n`);
     process.exit(error.exitCode);
@@ -66,9 +68,9 @@ function handleError(error: unknown): never {
       : "不明なエラーが発生しました。";
   process.stderr.write(`予期せぬエラーが発生しました: ${message}\n`);
   process.exit(1);
-}
+};
 
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   ensureApiKey();
 
   const [filePath] = process.argv.slice(2);
@@ -79,6 +81,6 @@ async function main(): Promise<void> {
 
   // Phase 1 step 3 で Gemini API の結果を出力する。
   process.stdout.write(input);
-}
+};
 
-main().catch(handleError);
+void main().catch(handleError);
