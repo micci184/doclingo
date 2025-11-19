@@ -9,6 +9,40 @@ const usageMessage = [
   "  cat api-doc-en.md | doclingo ja",
 ].join("\n");
 
+type LanguageMetadata = {
+  code: string;
+  displayName: string;
+  instructions: string;
+};
+
+const languagePresets: Record<string, Omit<LanguageMetadata, "code">> = {
+  ja: {
+    displayName: "Japanese",
+    instructions:
+      "Write clear Japanese technical documentation in polite です・ます調 without additional commentary.",
+  },
+  en: {
+    displayName: "English",
+    instructions:
+      "Produce concise, neutral American English suitable for software documentation.",
+  },
+  es: {
+    displayName: "Spanish",
+    instructions:
+      "Use neutral international Spanish with formal tone for professional technical docs.",
+  },
+  "zh-cn": {
+    displayName: "Simplified Chinese",
+    instructions:
+      "Use Simplified Chinese with precise terminology and a professional yet approachable tone.",
+  },
+  "zh-tw": {
+    displayName: "Traditional Chinese",
+    instructions:
+      "Use Traditional Chinese with Taiwan technical vocabulary and a polite instructional tone.",
+  },
+};
+
 /**
  * Custom error type so we can attach friendly CLI messages with dedicated exit codes.
  */
@@ -81,6 +115,47 @@ const ensureTargetLanguage = (lang?: string): string => {
 };
 
 /**
+ * Resolves human-friendly metadata for the requested language.
+ */
+const resolveLanguageMetadata = (lang: string): LanguageMetadata => {
+  const normalizedCode = lang.trim();
+  const lookupKey = normalizedCode.toLowerCase().replace(/_/g, "-");
+  const preset = languagePresets[lookupKey];
+
+  if (preset) {
+    return {
+      code: normalizedCode,
+      displayName: preset.displayName,
+      instructions: preset.instructions,
+    };
+  }
+
+  return {
+    code: normalizedCode,
+    displayName: normalizedCode,
+    instructions:
+      "Maintain a professional, neutral tone appropriate for technical documentation in the requested language.",
+  };
+};
+
+/**
+ * Builds the Gemini prompt, embedding metadata and preserving Markdown.
+ */
+const buildTranslationPrompt = (
+  metadata: LanguageMetadata,
+  content: string
+): string => {
+  return [
+    "You are a translator for international software-engineering documentation.",
+    `Translate the following Markdown into ${metadata.displayName} (${metadata.code}).`,
+    `Style guidance: ${metadata.instructions}`,
+    "Preserve the Markdown structure and output only the translated Markdown.",
+    "=== Source Markdown ===",
+    content,
+  ].join("\n\n");
+};
+
+/**
  * Determines whether to read from a file path or stdin, enforcing usage rules.
  */
 const resolveInputSource = async (filePath?: string): Promise<string> => {
@@ -121,11 +196,12 @@ const main = async (): Promise<void> => {
 
   const [langArg, filePath] = process.argv.slice(2);
   const targetLanguage = ensureTargetLanguage(langArg);
+  const languageMetadata = resolveLanguageMetadata(targetLanguage);
   const rawInput = await resolveInputSource(filePath);
   const input = ensureInputContent(rawInput);
 
-  // TODO: use targetLanguage when constructing prompts for Gemini.
-  void targetLanguage;
+  const prompt = buildTranslationPrompt(languageMetadata, input);
+  void prompt;
 
   // Phase 1 step 3 will replace this echo with the Gemini translation result.
   process.stdout.write(input);
