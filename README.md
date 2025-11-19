@@ -2,6 +2,18 @@
 
 `doclingo` is a TypeScript CLI that translates technical documentation through Gemini. It reads Markdown from a file path or stdin and writes the translated Markdown directly to stdout so it can be piped into other tools without extra logs. The CLI targets the cost-effective **gemini-2.5-flash-lite** model by default.
 
+## About
+
+**Description**  
+doclingo is a terminal-first translator that keeps Markdown structure intact while sending prompts to Gemini.  
+It’s designed for engineers who prefer command-line workflows or can’t rely on GUI-based translation assistants.
+
+**Use Cases**
+
+- Running quick document translations when tools like Claude Code aren’t available in the terminal
+- Translating API docs, ADRs, or specs as part of CI or local scripts
+- Automating localization checks without opening browser-based editors
+
 ## Requirements
 
 - Node.js 24 LTS (Krypton) or newer
@@ -9,7 +21,11 @@
 
 ## Setup
 
+### Install from GitHub
+
 ```bash
+git clone https://github.com/micci184/doclingo.git
+cd doclingo
 npm install
 npm run build
 npm link   # exposes the local CLI as the `doclingo` command
