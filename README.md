@@ -22,6 +22,10 @@ It’s designed for engineers who prefer command-line workflows or can’t rely 
   - CLI flag: `--model gemini-2.5-flash`
   - Env variable: `DOCLINGO_MODEL=gemini-2.5-flash`
   - Defaults to `gemini-2.5-flash-lite`
+- Optional style preset:
+  - CLI flag: `--preset docs` / `--preset casual`
+  - Env variable: `DOCLINGO_PRESET=docs`
+  - Defaults to `technical`
 
 ## Setup
 
@@ -65,6 +69,8 @@ cat file.md | doclingo <lang>
 # Japanese
 doclingo ja api-doc-en.md > api-doc-ja.md
 cat api-doc-en.md | doclingo ja > api-doc-ja.md
+# Switch to the docs preset for user-friendly tone
+doclingo ja api-doc-en.md --preset docs
 
 # Spanish
 doclingo es api-doc-en.md > api-doc-es.md
@@ -94,3 +100,13 @@ After running `npm run build` and `npm link`, verify the following commands with
 - `doclingo en api-doc-ja.md > api-doc-en.md`
 
 Each command should exit successfully without emitting extra stdout noise beyond the translated Markdown returned by Gemini.
+
+## Style presets
+
+| Preset    | Description                                                              |
+| --------- | ------------------------------------------------------------------------ |
+| technical | Precise, concise engineer-facing docs. (default)                         |
+| docs      | Clear, user-focused tone for developer guides and public docs.           |
+| casual    | More relaxed, conversational tone for internal notes or blog-style docs. |
+
+Use `--preset <name>` or set `DOCLINGO_PRESET=<name>` to switch presets.
