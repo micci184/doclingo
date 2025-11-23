@@ -18,6 +18,10 @@ It’s designed for engineers who prefer command-line workflows or can’t rely 
 
 - Node.js 24 LTS (Krypton) or newer
 - `GEMINI_API_KEY` environment variable (Gemini API key with access to Gemini 2.5 Flash Lite model)
+- Optional model override:
+  - CLI flag: `--model gemini-2.5-flash`
+  - Env variable: `DOCLINGO_MODEL=gemini-2.5-flash`
+  - Defaults to `gemini-2.5-flash-lite`
 
 ## Setup
 

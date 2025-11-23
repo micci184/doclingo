@@ -191,12 +191,36 @@ const handleError = (error: unknown): never => {
  * CLI entry point. Validates configuration, gathers input, and (temporarily)
  * echoes it until the Gemini integration is added.
  */
-const GEMINI_MODEL =
+const DEFAULT_GEMINI_MODEL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
-const callGemini = async (prompt: string): Promise<string> => {
+const getModelEndpoint = (cliModelOverride?: string): string => {
+  const cliModel = cliModelOverride?.trim();
+  if (cliModel === "") {
+    throw new CliError("Model id cannot be empty.");
+  }
+  if (cliModel) {
+    return cliModel;
+  }
+
+  const envModel = process.env.DOCLINGO_MODEL?.trim();
+  if (envModel === "") {
+    throw new CliError("DOCLINGO_MODEL cannot be empty.");
+  }
+  if (envModel) {
+    return envModel;
+  }
+
+  return DEFAULT_GEMINI_MODEL;
+};
+
+const callGemini = async (
+  prompt: string,
+  cliModelOverride?: string
+): Promise<string> => {
   const apiKey = ensureApiKey();
-  const response = await fetch(GEMINI_MODEL, {
+  const modelEndpoint = getModelEndpoint(cliModelOverride);
+  const response = await fetch(modelEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -243,14 +267,23 @@ const callGemini = async (prompt: string): Promise<string> => {
 const main = async (): Promise<void> => {
   ensureApiKey();
 
-  const [langArg, filePath] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const modelFlagIndex = args.indexOf("--model");
+
+  const [langArg, filePath] =
+    modelFlagIndex >= 0
+      ? args.filter((_, index) => index !== modelFlagIndex && index !== modelFlagIndex + 1)
+      : args;
+
   const targetLanguage = ensureTargetLanguage(langArg);
   const languageMetadata = resolveLanguageMetadata(targetLanguage);
   const rawInput = await resolveInputSource(filePath);
   const input = ensureInputContent(rawInput);
 
   const prompt = buildTranslationPrompt(languageMetadata, input);
-  const translation = await callGemini(prompt);
+  const modelOverride =
+    modelFlagIndex >= 0 ? args[modelFlagIndex + 1] : undefined;
+  const translation = await callGemini(prompt, modelOverride);
   process.stdout.write(translation);
 };
 
