@@ -15,6 +15,11 @@ type LanguageMetadata = {
   instructions: string;
 };
 
+type StylePreset = {
+  name: string;
+  extraInstructions: string;
+};
+
 const languagePresets: Record<string, Omit<LanguageMetadata, "code">> = {
   ja: {
     displayName: "Japanese",
@@ -141,14 +146,49 @@ const resolveLanguageMetadata = (lang: string): LanguageMetadata => {
 /**
  * Builds the Gemini prompt, embedding metadata and preserving Markdown.
  */
+const stylePresets: Record<string, StylePreset> = {
+  technical: {
+    name: "technical",
+    extraInstructions:
+      "Write precise, concise technical documentation for software engineers.",
+  },
+  docs: {
+    name: "docs",
+    extraInstructions:
+      "Write clear, user-focused documentation for developers and advanced users.",
+  },
+  casual: {
+    name: "casual",
+    extraInstructions:
+      "Use a slightly more relaxed, conversational tone appropriate for internal engineering notes.",
+  },
+};
+
+const resolveStylePreset = (override?: string): StylePreset => {
+  const presetName =
+    override?.trim() || process.env.DOCLINGO_PRESET?.trim() || "technical";
+  const preset =
+    stylePresets[presetName as keyof typeof stylePresets] ||
+    stylePresets.technical;
+
+  if (!stylePresets[presetName as keyof typeof stylePresets]) {
+    process.stderr.write(
+      `Unknown preset "${presetName}". Falling back to "technical".\n`
+    );
+  }
+
+  return preset;
+};
+
 const buildTranslationPrompt = (
   metadata: LanguageMetadata,
-  content: string
+  content: string,
+  preset: StylePreset
 ): string => {
   return [
     "You are a translator for international software-engineering documentation.",
     `Translate the following Markdown into ${metadata.displayName} (${metadata.code}).`,
-    `Style guidance: ${metadata.instructions}`,
+    `Style guidance: ${metadata.instructions} ${preset.extraInstructions}`,
     "Preserve the Markdown structure and output only the translated Markdown.",
     "=== Source Markdown ===",
     content,
@@ -273,9 +313,14 @@ const callGemini = async (
 
 const parseCliArgs = (
   argv: string[]
-): { positional: string[]; modelOverride?: string } => {
+): {
+  positional: string[];
+  modelOverride?: string;
+  presetOverride?: string;
+} => {
   const positional: string[] = [];
   let modelOverride: string | undefined;
+  let presetOverride: string | undefined;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -299,17 +344,36 @@ const parseCliArgs = (
       continue;
     }
 
+    if (arg === "--preset") {
+      const value = argv[i + 1];
+      if (!value || value.startsWith("--")) {
+        throw new CliError("`--preset` flag requires a preset name.");
+      }
+      presetOverride = value;
+      i += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--preset=")) {
+      const value = arg.slice("--preset=".length);
+      if (!value.trim()) {
+        throw new CliError("`--preset` flag requires a preset name.");
+      }
+      presetOverride = value;
+      continue;
+    }
+
     positional.push(arg);
   }
 
-  return { positional, modelOverride };
+  return { positional, modelOverride, presetOverride };
 };
 
 const main = async (): Promise<void> => {
   ensureApiKey();
 
   const args = process.argv.slice(2);
-  const { positional, modelOverride } = parseCliArgs(args);
+  const { positional, modelOverride, presetOverride } = parseCliArgs(args);
   const [langArg, filePath] = positional;
 
   const targetLanguage = ensureTargetLanguage(langArg);
@@ -317,7 +381,8 @@ const main = async (): Promise<void> => {
   const rawInput = await resolveInputSource(filePath);
   const input = ensureInputContent(rawInput);
 
-  const prompt = buildTranslationPrompt(languageMetadata, input);
+  const preset = resolveStylePreset(presetOverride);
+  const prompt = buildTranslationPrompt(languageMetadata, input, preset);
   const translation = await callGemini(prompt, modelOverride);
   process.stdout.write(translation);
 };
