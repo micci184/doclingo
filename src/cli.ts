@@ -272,7 +272,9 @@ const main = async (): Promise<void> => {
 
   const [langArg, filePath] =
     modelFlagIndex >= 0
-      ? args.filter((_, index) => index !== modelFlagIndex && index !== modelFlagIndex + 1)
+      ? args.filter(
+          (_, index) => index !== modelFlagIndex && index !== modelFlagIndex + 1
+        )
       : args;
 
   const targetLanguage = ensureTargetLanguage(langArg);
