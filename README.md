@@ -77,6 +77,9 @@ doclingo zh-TW api-doc-en.md > api-doc-zh-tw.md
 
 # Back to English
 doclingo en api-doc-ja.md > api-doc-en.md
+
+# Override model via CLI flag
+doclingo ja api-doc-en.md --model gemini-2.5-flash
 ```
 
 ## Validation checklist
