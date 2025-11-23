@@ -191,12 +191,43 @@ const handleError = (error: unknown): never => {
  * CLI entry point. Validates configuration, gathers input, and (temporarily)
  * echoes it until the Gemini integration is added.
  */
-const GEMINI_MODEL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
+const DEFAULT_GEMINI_MODEL_ID = "gemini-2.5-flash-lite";
 
-const callGemini = async (prompt: string): Promise<string> => {
+const buildModelEndpoint = (modelId: string): string => {
+  if (modelId.startsWith("http://") || modelId.startsWith("https://")) {
+    return modelId;
+  }
+  return `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+};
+
+const resolveModelId = (cliModelOverride?: string): string => {
+  const cliModel = cliModelOverride?.trim();
+  if (cliModel === "") {
+    throw new CliError("Model id cannot be empty.");
+  }
+  if (cliModel) {
+    return cliModel;
+  }
+
+  const envModel = process.env.DOCLINGO_MODEL?.trim();
+  if (envModel === "") {
+    throw new CliError("DOCLINGO_MODEL cannot be empty.");
+  }
+  if (envModel) {
+    return envModel;
+  }
+
+  return DEFAULT_GEMINI_MODEL_ID;
+};
+
+const callGemini = async (
+  prompt: string,
+  cliModelOverride?: string
+): Promise<string> => {
   const apiKey = ensureApiKey();
-  const response = await fetch(GEMINI_MODEL, {
+  const modelId = resolveModelId(cliModelOverride);
+  const modelEndpoint = buildModelEndpoint(modelId);
+  const response = await fetch(modelEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -240,17 +271,54 @@ const callGemini = async (prompt: string): Promise<string> => {
   return translatedText;
 };
 
+const parseCliArgs = (
+  argv: string[]
+): { positional: string[]; modelOverride?: string } => {
+  const positional: string[] = [];
+  let modelOverride: string | undefined;
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === "--model") {
+      const value = argv[i + 1];
+      if (!value || value.startsWith("--")) {
+        throw new CliError("`--model` flag requires a model id value.");
+      }
+      modelOverride = value;
+      i += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--model=")) {
+      const value = arg.slice("--model=".length);
+      if (!value.trim()) {
+        throw new CliError("`--model` flag requires a model id value.");
+      }
+      modelOverride = value;
+      continue;
+    }
+
+    positional.push(arg);
+  }
+
+  return { positional, modelOverride };
+};
+
 const main = async (): Promise<void> => {
   ensureApiKey();
 
-  const [langArg, filePath] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const { positional, modelOverride } = parseCliArgs(args);
+  const [langArg, filePath] = positional;
+
   const targetLanguage = ensureTargetLanguage(langArg);
   const languageMetadata = resolveLanguageMetadata(targetLanguage);
   const rawInput = await resolveInputSource(filePath);
   const input = ensureInputContent(rawInput);
 
   const prompt = buildTranslationPrompt(languageMetadata, input);
-  const translation = await callGemini(prompt);
+  const translation = await callGemini(prompt, modelOverride);
   process.stdout.write(translation);
 };
 
