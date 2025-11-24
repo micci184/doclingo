@@ -110,3 +110,24 @@ Each command should exit successfully without emitting extra stdout noise beyond
 | casual    | More relaxed, conversational tone for internal notes or blog-style docs. |
 
 Use `--preset <name>` or set `DOCLINGO_PRESET=<name>` to switch presets.
+
+## Debug & inspection
+
+| Flag             | Description                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| `--print-prompt` | Print the full prompt that will be sent to Gemini (stderr) before making the API call.         |
+| `--dry-run`      | Output the prompt to stdout and exit without calling Gemini. Useful for pipeline testing.      |
+| `--verbose`      | Emit status messages (model in use, request/response) and any available token usage to stderr. |
+
+Examples:
+
+```bash
+# Inspect prompt only
+doclingo ja api-doc-en.md --dry-run
+
+# See prompt but still call Gemini
+doclingo ja api-doc-en.md --print-prompt
+
+# Verbose mode with custom model and preset
+doclingo ja api-doc-en.md --verbose --model gemini-2.5-flash --preset docs
+```

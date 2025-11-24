@@ -260,13 +260,23 @@ const resolveModelId = (cliModelOverride?: string): string => {
   return DEFAULT_GEMINI_MODEL_ID;
 };
 
+type CallGeminiOptions = {
+  modelOverride?: string;
+  verbose?: boolean;
+};
+
 const callGemini = async (
   prompt: string,
-  cliModelOverride?: string
+  options: CallGeminiOptions = {}
 ): Promise<string> => {
+  const { modelOverride, verbose = false } = options;
   const apiKey = ensureApiKey();
-  const modelId = resolveModelId(cliModelOverride);
+  const modelId = resolveModelId(modelOverride);
   const modelEndpoint = buildModelEndpoint(modelId);
+  if (verbose) {
+    process.stderr.write(`Using model: ${modelId}\n`);
+    process.stderr.write("Sending request to Gemini...\n");
+  }
   const response = await fetch(modelEndpoint, {
     method: "POST",
     headers: {
@@ -284,6 +294,11 @@ const callGemini = async (
   });
 
   if (!response.ok) {
+    if (verbose) {
+      process.stderr.write(
+        `Request failed with status ${response.status}. Fetching error payload...\n`
+      );
+    }
     const errorPayload = await response.text();
     throw new CliError(
       `Gemini API request failed with status ${response.status}: ${errorPayload}`
@@ -294,7 +309,27 @@ const callGemini = async (
     candidates?: Array<{
       content?: { parts?: Array<{ text?: string }> };
     }>;
+    usageMetadata?: {
+      promptTokenCount?: number;
+      candidatesTokenCount?: number;
+      totalTokenCount?: number;
+    };
   };
+
+  if (verbose) {
+    process.stderr.write("Received response from Gemini.\n");
+    if (json.usageMetadata) {
+      const { promptTokenCount, candidatesTokenCount, totalTokenCount } =
+        json.usageMetadata;
+      process.stderr.write(
+        `usage: prompt=${promptTokenCount ?? "?"}, candidates=${
+          candidatesTokenCount ?? "?"
+        }, total=${totalTokenCount ?? "?"} tokens\n`
+      );
+    } else {
+      process.stderr.write("usage: unavailable\n");
+    }
+  }
 
   const translatedText = json.candidates
     ?.flatMap((candidate) => candidate.content?.parts ?? [])
@@ -311,16 +346,22 @@ const callGemini = async (
   return translatedText;
 };
 
-const parseCliArgs = (
-  argv: string[]
-): {
+type ParsedFlags = {
   positional: string[];
   modelOverride?: string;
   presetOverride?: string;
-} => {
+  printPrompt: boolean;
+  dryRun: boolean;
+  verbose: boolean;
+};
+
+const parseCliArgs = (argv: string[]): ParsedFlags => {
   const positional: string[] = [];
   let modelOverride: string | undefined;
   let presetOverride: string | undefined;
+  let printPrompt = false;
+  let dryRun = false;
+  let verbose = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -363,17 +404,50 @@ const parseCliArgs = (
       continue;
     }
 
+    if (arg === "--print-prompt") {
+      printPrompt = true;
+      continue;
+    }
+
+    if (arg === "--dry-run") {
+      dryRun = true;
+      continue;
+    }
+
+    if (arg === "--verbose") {
+      verbose = true;
+      continue;
+    }
+
     positional.push(arg);
   }
 
-  return { positional, modelOverride, presetOverride };
+  return {
+    positional,
+    modelOverride,
+    presetOverride,
+    printPrompt,
+    dryRun,
+    verbose,
+  };
+};
+
+const logPromptToStderr = (prompt: string): void => {
+  process.stderr.write("=== doclingo prompt ===\n");
+  process.stderr.write(`${prompt}\n`);
+  process.stderr.write("=== end prompt ===\n");
 };
 
 const main = async (): Promise<void> => {
-  ensureApiKey();
-
   const args = process.argv.slice(2);
-  const { positional, modelOverride, presetOverride } = parseCliArgs(args);
+  const {
+    positional,
+    modelOverride,
+    presetOverride,
+    printPrompt,
+    dryRun,
+    verbose,
+  } = parseCliArgs(args);
   const [langArg, filePath] = positional;
 
   const targetLanguage = ensureTargetLanguage(langArg);
@@ -383,7 +457,20 @@ const main = async (): Promise<void> => {
 
   const preset = resolveStylePreset(presetOverride);
   const prompt = buildTranslationPrompt(languageMetadata, input, preset);
-  const translation = await callGemini(prompt, modelOverride);
+
+  if (printPrompt) {
+    logPromptToStderr(prompt);
+  }
+
+  if (dryRun) {
+    process.stdout.write(`${prompt}\n`);
+    return;
+  }
+
+  const translation = await callGemini(prompt, {
+    modelOverride,
+    verbose,
+  });
   process.stdout.write(translation);
 };
 
